@@ -1,0 +1,16 @@
+@import "modern-normalize/modern-normalize.css";
+
+:root {
+  --bg: #f8f9fa;
+  --text: #fff;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+}
