@@ -4,25 +4,39 @@ import type { Note, NoteTag } from '../types/note';
 
 const API = 'https://notehub-public.goit.study/api';
 
-const raw = import.meta.env.VITE_NOTEHUB_TOKEN as string | undefined;
-const token = raw ? raw.replace(/^['"]|['"]$/g, '').trim() : '';
-
-if (!token) {
-  console.error(
-    'VITE_NOTEHUB_TOKEN is missing. Add it to .env (root) and restart dev server.'
-  );
-}
-
 const http: AxiosInstance = axios.create({
   baseURL: API,
-  headers: {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    'Content-Type': 'application/json',
-  },
+});
+
+http.interceptors.request.use((config) => {
+  const raw = import.meta.env.VITE_NOTEHUB_TOKEN as string | undefined;
+  const token = raw ? raw.replace(/^['"]|['"]$/g, '').trim() : '';
+
+  if (!token) {
+    console.error('VITE_NOTEHUB_TOKEN is missing on this build.');
+    return config;
+  }
+
+  const h = (config.headers ?? {}) as any;
+
+  if (typeof h.set === 'function') {
+    
+    h.set('Authorization', `Bearer ${token}`);
+    h.set('Content-Type', 'application/json');
+  } else {
+   
+    (config as any).headers = {
+      ...h,
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  return config;
 });
 
 export interface FetchNotesParams {
-  page?: number; // 1-based
+  page?: number;
   perPage?: number;
   search?: string;
 }
@@ -34,7 +48,6 @@ export interface Paginated<T> {
   totalItems: number;
   totalPages: number;
 }
-
 export type FetchNotesResponse = Paginated<Note>;
 
 export interface CreateNoteParams {
@@ -58,24 +71,8 @@ export async function fetchNotes(
     ...(search ? { search } : {}),
   });
 
-  const res: AxiosResponse<any> = await http.get(`/notes?${query.toString()}`);
-  const payload = res.data ?? {};
-
-  const items: Note[] = payload.items ?? payload.data ?? payload.notes ?? [];
-  const currentPage: number = payload.page ?? payload.currentPage ?? page ?? 1;
-  const limit: number = payload.perPage ?? payload.limit ?? perPage ?? 12;
-  const totalItems: number =
-    payload.totalItems ?? payload.total ?? (Array.isArray(items) ? items.length : 0);
-  const totalPages: number =
-    payload.totalPages ?? (limit ? Math.max(1, Math.ceil(totalItems / limit)) : 1);
-
-  return {
-    items,
-    page: currentPage,
-    perPage: limit,
-    totalItems,
-    totalPages,
-  };
+  const res = await http.get<FetchNotesResponse>(`/notes?${query.toString()}`);
+  return res.data;
 }
 
 export async function createNote(

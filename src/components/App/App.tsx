@@ -2,12 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import {
   keepPreviousData,
-  useMutation,
   useQuery,
   useQueryClient,
   type UseQueryResult,
 } from '@tanstack/react-query';
-import { fetchNotes, deleteNote, type FetchNotesResponse } from '../../services/noteService';
+import { fetchNotes, type FetchNotesResponse } from '../../services/noteService';
 import NoteList from '../NoteList/NoteList';
 import Pagination from '../Pagination/Pagination';
 import SearchBox from '../SearchBox/SearchBox';
@@ -46,13 +45,6 @@ export default function App() {
     setPage(1);
   }, [debouncedSearch]);
 
-  const delMutation = useMutation({
-    mutationFn: (id: string) => deleteNote(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-    },
-  });
-
   const notes = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
   const currentPage = data?.page ?? 1;
@@ -83,13 +75,7 @@ export default function App() {
         </p>
       )}
 
-      {notes.length > 0 && (
-        <NoteList
-          notes={notes}
-          onDelete={(id) => delMutation.mutate(id)}
-          isDeleting={delMutation.isPending}
-        />
-      )}
+      {notes.length > 0 && <NoteList notes={notes} />}
 
       {!isLoading && !isError && notes.length === 0 && !isFetching && (
         <p style={{ padding: 16 }}>No notes found.</p>
