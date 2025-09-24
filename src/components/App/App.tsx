@@ -45,9 +45,9 @@ export default function App() {
     setPage(1);
   }, [debouncedSearch]);
 
-  const notes = data?.items ?? [];
+  const notes = data?.notes ?? [];
   const totalPages = data?.totalPages ?? 1;
-  const currentPage = data?.page ?? 1;
+  const currentPage = page; 
 
   return (
     <div className={css.app}>

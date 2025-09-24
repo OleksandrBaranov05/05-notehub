@@ -2,7 +2,8 @@ import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { Note, NoteTag } from '../types/note';
 
-const API_NOTES = 'https://notehub-public.goit.study/api/notes';
+const API_BASE = 'https://notehub-public.goit.study/api';
+const NOTES_URL = `${API_BASE}/notes`;
 
 const http = axios.create();
 
@@ -25,19 +26,15 @@ http.interceptors.request.use((config) => {
 });
 
 export interface FetchNotesParams {
-  page?: number;
-  perPage?: number;
+  page?: number;    
+  perPage?: number; 
   search?: string;
 }
 
-export interface Paginated<T> {
-  items: T[];
-  page: number;
-  perPage: number;
-  totalItems: number;
+export interface FetchNotesResponse {
+  notes: Note[];
   totalPages: number;
 }
-export type FetchNotesResponse = Paginated<Note>;
 
 export interface CreateNoteParams {
   title: string;
@@ -45,51 +42,30 @@ export interface CreateNoteParams {
   tag: NoteTag;
 }
 export type CreateNoteResponse = Note;
-
-export interface DeleteNoteResponse {
-  id: string;
-}
+export type DeleteNoteResponse = Note;
 
 export async function fetchNotes(
   params: FetchNotesParams
 ): Promise<FetchNotesResponse> {
   const { page = 1, perPage = 12, search } = params;
-  const q = new URLSearchParams({
+  const qs = new URLSearchParams({
     page: String(page),
     perPage: String(perPage),
     ...(search ? { search } : {}),
   }).toString();
 
-  const url = `${API_NOTES}?${q}`;
-
-  const res = await http.get<any>(url);
-  const payload = res.data ?? {};
-
-  const items: Note[] = payload.items ?? payload.data ?? payload.notes ?? [];
-  const currentPage: number = payload.page ?? payload.currentPage ?? page ?? 1;
-  const limit: number = payload.perPage ?? payload.limit ?? perPage ?? 12;
-  const totalItems: number =
-    payload.totalItems ?? payload.total ?? (Array.isArray(items) ? items.length : 0);
-  const totalPages: number =
-    payload.totalPages ?? (limit ? Math.max(1, Math.ceil(totalItems / limit)) : 1);
-
-  return {
-    items,
-    page: currentPage,
-    perPage: limit,
-    totalItems,
-    totalPages,
-  };
+  const res = await http.get<FetchNotesResponse>(`${NOTES_URL}?${qs}`);
+  return res.data;
 }
 
 export async function createNote(
   body: CreateNoteParams
 ): Promise<CreateNoteResponse> {
-  const res: AxiosResponse<CreateNoteResponse> = await http.post(API_NOTES, body);
+  const res: AxiosResponse<CreateNoteResponse> = await http.post(NOTES_URL, body);
   return res.data;
 }
 
 export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
-  const res: AxiosResponse<DeleteNoteResponse> = await http.delete(`${API_NOTES}/${id}`);
+  const res: AxiosResponse<DeleteNoteResponse> = await http.delete(`${NOTES_URL}/${id}`);
   return res.data;
 }
