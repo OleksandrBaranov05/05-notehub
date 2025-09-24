@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { Note, NoteTag } from '../types/note';
 
-const API = 'https://notehub-public.goit.study/api';
+const API = 'https://notehub-public.goit.study/api/';
 
 const http: AxiosInstance = axios.create({
   baseURL: API,
@@ -18,13 +18,10 @@ http.interceptors.request.use((config) => {
   }
 
   const h = (config.headers ?? {}) as any;
-
   if (typeof h.set === 'function') {
-    
     h.set('Authorization', `Bearer ${token}`);
     h.set('Content-Type', 'application/json');
   } else {
-   
     (config as any).headers = {
       ...h,
       Authorization: `Bearer ${token}`,
@@ -36,7 +33,7 @@ http.interceptors.request.use((config) => {
 });
 
 export interface FetchNotesParams {
-  page?: number;
+  page?: number; // 1-based
   perPage?: number;
   search?: string;
 }
@@ -71,18 +68,18 @@ export async function fetchNotes(
     ...(search ? { search } : {}),
   });
 
-  const res = await http.get<FetchNotesResponse>(`/notes?${query.toString()}`);
+  const res = await http.get<FetchNotesResponse>(`notes?${query.toString()}`);
   return res.data;
 }
 
 export async function createNote(
   body: CreateNoteParams
 ): Promise<CreateNoteResponse> {
-  const res: AxiosResponse<CreateNoteResponse> = await http.post('/notes', body);
+  const res: AxiosResponse<CreateNoteResponse> = await http.post('notes', body);
   return res.data;
 }
 
 export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
-  const res: AxiosResponse<DeleteNoteResponse> = await http.delete(`/notes/${id}`);
+  const res: AxiosResponse<DeleteNoteResponse> = await http.delete(`notes/${id}`);
   return res.data;
 }
